@@ -1,0 +1,51 @@
+.text {
+    -fx-font-smoothing-type: lcd;
+}
+
+#eficiencia-grupo {
+    -fx-text-fill: linear-gradient(#cccccc, #ffffff);
+    -fx-font-size: 95px;
+    -fx-font-weight: bold;
+    -fx-border-color: black;
+    -fx-border-width: 4;
+}
+
+#eficiencia-grupo .text {
+    -fx-stroke: black;
+    -fx-stroke-width: 1.8px;
+}
+
+#eficiencia-total {
+    -fx-text-fill: linear-gradient(#cccccc, #ffffff);
+    -fx-font-size: 60px;
+    -fx-font-weight: bold;
+    -fx-border-color: black;
+    -fx-border-width: 4;
+}
+
+#eficiencia-total .text {
+    -fx-stroke: black;
+    -fx-stroke-width: 1.8px;
+}
+
+#maquina {
+    -fx-text-fill: linear-gradient(#252525, #fcfcfc);
+    -fx-font-size: 47px;
+    -fx-font-weight: bold;
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    /*-fx-label-padding: 0px;*/
+    /*-fx-padding: 0px;*/
+    /*-fx-alignment: center;*/
+    /*-fx-text-alignment: center;*/
+    /*-fx-text-origin: top;*/
+}
+
+#maquina .text {
+    -fx-stroke: black;
+    -fx-stroke-width: 1.8px;
+    /*-fx-label-padding: 0px;*/
+    /*-fx-padding: 0px;*/
+    /*-fx-text-alignment: center;*/
+    /*-fx-alignment: center;*/
+}
