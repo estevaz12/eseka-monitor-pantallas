@@ -1,16 +1,9 @@
 package ar.com.leo.monitor.fx.controller;
 
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-
 import ar.com.leo.monitor.fx.service.MaquinaService;
 import ar.com.leo.monitor.jdbc.DataSourceConfig;
 import ar.com.leo.monitor.model.Maquina;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -18,12 +11,20 @@ import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
+
+import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 public class MonitorController implements Initializable {
 
@@ -69,8 +70,8 @@ public class MonitorController implements Initializable {
     private final Image F6 = new Image("images/icons/67_big_machine_mask_F6.png");
 
     private final String mayor90 = "-fx-background-color: #00c900;";
-    private final String menor90 = "-fx-background-color: #acff7f;";
-    private final String menor85 = "-fx-background-color: #f0ff39;";
+    private final String mayor85 = "-fx-background-color: #acff7f;";
+    private final String mayor80 = "-fx-background-color: #f0ff39;";
     private final String menor80 = "-fx-background-color: #ff6565;";
 
     public MonitorController(List<String> parameters) {
@@ -86,30 +87,32 @@ public class MonitorController implements Initializable {
         } else {
             final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy hh:mm:ss");
             // FECHA y TURNO
-            final Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.seconds(1), event -> {
-                        final LocalDateTime localDateTime = LocalDateTime.now();
-                        fecha.setText(formatter.format(localDateTime));
-                        turno.setText(getTurno(localDateTime.getHour()));
-                    })
-            );
-            timeline.setCycleCount(Animation.INDEFINITE);
-            timeline.play();
+            final AnimationTimer timer = new AnimationTimer() {
+                @Override
+                public void handle(long now) {
+                    final LocalDateTime localDateTime = LocalDateTime.now();
+                    fecha.setText(formatter.format(localDateTime));
+                    turno.setText(getTurno(localDateTime));
+                }
+            };
+            timer.start();
 
-            inicializarGrilla();
+            initGrid();
 
             maquinaService = new MaquinaService();
             maquinaService.setPeriod(Duration.seconds(Double.parseDouble(parameters.get(0)))); // Segundos
-            maquinaService.setGroupName(parameters.get(1)); // Sector
+            maquinaService.setRoomCode(parameters.get(1)); // Nombre del sector
             maquinaService.setGroupCodes(FXCollections.observableList(parameters.subList(2, parameters.size()))); // Grupos
             maquinaService.setOnFailed(event -> event.getSource().getException().printStackTrace());
 //            maquinaService.setOnSucceeded(event -> grupo.setText(maquinaService.getGroupCode()));
             maquinaService.lastValueProperty().addListener((observable, oldValue, newValue) -> { // or bind to this property
                 if (!maquinaService.getGroupCode().equals("SECTOR")) {
-                    grupo.setText(maquinaService.getGroupCode());
-                    mostrarEficienciasPorGrupo(newValue);
+                    if (((List<Maquina>) newValue[0]).size() > 0) {
+                        grupo.setText(maquinaService.getGroupCode());
+                        mostrarEficienciasPorGrupo(newValue);
+                    }
                 } else {
-                    grupo.setText(maquinaService.getGroupName());
+                    grupo.setText(maquinaService.getRoomCode());
                     mostrarEficienciasPorSector(newValue);
                 }
                 maquinaService.changeGroup();
@@ -119,7 +122,8 @@ public class MonitorController implements Initializable {
         }
     }
 
-    private String getTurno(final int hour) {
+    private String getTurno(final LocalDateTime localDateTime) {
+        int hour = localDateTime.getHour();
         if (hour >= 6 && hour < 14) {
             return "1";
         } else if (hour >= 14 && hour < 22) {
@@ -129,20 +133,20 @@ public class MonitorController implements Initializable {
         }
     }
 
-    private void inicializarGrilla() {
+    private void initGrid() {
 
         labels = new ArrayList<>();
         images = new ArrayList<>();
         functionImages = new ArrayList<>();
 
         Platform.runLater(() -> {
-            for (int row = 0; row < grid.getRowCount(); row++) {
-                for (int col = 0; col < grid.getColumnCount(); col++) {
+            for (int row = 0; row < grid.getRowConstraints().size(); row++) {
+                for (int col = 0; col < grid.getColumnConstraints().size(); col++) {
                     Label label = new Label();
                     label.setAlignment(Pos.CENTER);
                     label.setTextAlignment(TextAlignment.CENTER);
-                    label.setPrefWidth(grid.getWidth() / 5);
-                    label.setPrefHeight(grid.getHeight() / 5);
+                    label.setPrefWidth(grid.getWidth() / grid.getColumnConstraints().size());
+                    label.setPrefHeight(grid.getHeight() / grid.getRowConstraints().size());
                     GridPane.setFillHeight(label, true);
                     GridPane.setFillWidth(label, true);
                     label.setGraphicTextGap(0);
@@ -169,8 +173,8 @@ public class MonitorController implements Initializable {
         final List<Maquina> maquinas = (List<Maquina>) results[0];
         final Integer eficienciaGrupal = (Integer) results[1];
         int cantidad = maquinas.size();
-//        double labelWidth = grid.getWidth() / (cantidad / 5d);
-        double labelHeight = grid.getHeight() / (cantidad / 5d);
+//        double labelWidth = grid.getWidth() / ((double)cantidad / grid.getColumnCount());
+        double labelHeight = grid.getHeight() / ((double) cantidad / grid.getRowConstraints().size());
         int i = 0;
 
         clearGrid();
@@ -232,7 +236,7 @@ public class MonitorController implements Initializable {
             }
 
             if (maquina.getState() == 0 || maquina.getState() == 2 || maquina.getState() == 3 || maquina.getState() == 4) {
-                if (maquina.getFunctionKey() != null) {
+                if (maquina.getFunctionKey() != null && maquina.getFunctionKey() != 0) {
                     final String binary = String.format("%8s", Integer.toBinaryString(maquina.getFunctionKey())).replace(' ', '0');
 
                     if (binary.charAt(binary.length() - 2) == '1') { // F1=2
@@ -260,14 +264,15 @@ public class MonitorController implements Initializable {
 
             if (maquina.getWorkEfficiency() >= 90) {
                 label.setStyle(mayor90);
-            } else if (maquina.getWorkEfficiency() < 90 && maquina.getWorkEfficiency() >= 85) {
-                label.setStyle(menor90);
-            } else if (maquina.getWorkEfficiency() < 85 && maquina.getWorkEfficiency() >= 80) {
-                label.setStyle(menor85);
+            } else if (maquina.getWorkEfficiency() >= 85) {
+                label.setStyle(mayor85);
+            } else if (maquina.getWorkEfficiency() >= 80) {
+                label.setStyle(mayor80);
             } else {
                 label.setStyle(menor80);
             }
             i++;
+            label.setVisible(true);
         }
 
         eficienciaGrupo.setText(eficienciaGrupal + "%");
@@ -275,9 +280,9 @@ public class MonitorController implements Initializable {
         if (eficienciaGrupal >= 90) {
             eficienciaGrupo.setStyle(mayor90);
         } else if (eficienciaGrupal >= 85) {
-            eficienciaGrupo.setStyle(menor90);
+            eficienciaGrupo.setStyle(mayor85);
         } else if (eficienciaGrupal >= 80) {
-            eficienciaGrupo.setStyle(menor85);
+            eficienciaGrupo.setStyle(mayor80);
         } else {
             eficienciaGrupo.setStyle(menor80);
         }
@@ -288,8 +293,8 @@ public class MonitorController implements Initializable {
         final Map<String, Integer> eficienciasPorGrupo = (Map<String, Integer>) results[0];
         final Integer eficienciaTot = (Integer) results[1];
         int cantidad = eficienciasPorGrupo.size();
-//        double labelWidth = grid.getWidth() / (cantidad / 5d);
-        double labelHeight = grid.getHeight() / (cantidad / 5d);
+//        double labelWidth = grid.getWidth() / ((double)cantidad / grid.getColumnCount());
+        double labelHeight = grid.getHeight() / ((double) cantidad / grid.getRowConstraints().size());
         int i = 0;
 
         clearGrid();
@@ -302,9 +307,9 @@ public class MonitorController implements Initializable {
             if (set.getValue() >= 90) {
                 label.setStyle(mayor90);
             } else if (set.getValue() >= 85) {
-                label.setStyle(menor90);
+                label.setStyle(mayor85);
             } else if (set.getValue() >= 80) {
-                label.setStyle(menor85);
+                label.setStyle(mayor80);
             } else {
                 label.setStyle(menor80);
             }
@@ -315,12 +320,13 @@ public class MonitorController implements Initializable {
             if (eficienciaTot >= 90) {
                 eficienciaTotal.setStyle(mayor90);
             } else if (eficienciaTot >= 85) {
-                eficienciaTotal.setStyle(menor90);
+                eficienciaTotal.setStyle(mayor85);
             } else if (eficienciaTot >= 80) {
-                eficienciaTotal.setStyle(menor85);
+                eficienciaTotal.setStyle(mayor80);
             } else {
                 eficienciaTotal.setStyle(menor80);
             }
+            label.setVisible(true);
         }
     }
 
@@ -328,12 +334,13 @@ public class MonitorController implements Initializable {
         eficienciaGrupo.setText(null);
         eficienciaGrupo.setStyle("-fx-background-color: none;");
         for (Label label : labels) {
-            if (label.getText() != null) {
-                label.setText(null);
-                label.setStyle("-fx-background-color: none;-fx-border-color: none;");
+            label.setPrefHeight(0);
+            label.setVisible(false);
+//            if (label.getText() != null) {
+//                label.setText(null);
+//                label.setStyle("-fx-background-color: none;-fx-border-width: 0;");
 //                label.setPrefWidth(0);
-                label.setPrefHeight(0);
-            }
+//            }
         }
         for (ImageView imageView : images) {
             if (imageView.getImage() != null)

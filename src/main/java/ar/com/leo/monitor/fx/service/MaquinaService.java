@@ -21,7 +21,7 @@ public class MaquinaService extends ScheduledService<Object[]> {
     private final SimpleListProperty<String> groupCodes = new SimpleListProperty<>(this, "groupCodes");
     // Property allows you to change the "groupCode" between executions
     private final SimpleStringProperty groupCode = new SimpleStringProperty(this, "groupCode");
-    private final SimpleStringProperty groupName = new SimpleStringProperty(this, "groupName");
+    private final SimpleStringProperty roomCode = new SimpleStringProperty(this, "roomCode");
 
     public void setGroupCodes(ObservableList<String> groupCodes) {
         this.groupCodes.set(groupCodes);
@@ -36,16 +36,15 @@ public class MaquinaService extends ScheduledService<Object[]> {
         this.groupCode.set(groupCode);
     }
 
-    public String getGroupName() {
-        return groupName.get();
+    public String getRoomCode() {
+        return roomCode.get();
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName.set(groupName);
+    public void setRoomCode(String roomCode) {
+        this.roomCode.set(roomCode);
     }
 
     public void changeGroup() {
-
         int index = groupCodes.indexOf(groupCode.get());
 
         if (this.groupCode.get().equals("SECTOR")) {
@@ -60,31 +59,26 @@ public class MaquinaService extends ScheduledService<Object[]> {
     @Override
     protected Task<Object[]> createTask() {
         // creates a new Task and gives the current "groupCode" as an argument. This is called every cycle
-        return new MaquinaTask(this.getGroupCode(), this.getGroupName());
+        return new MaquinaTask(this.getGroupCode(), this.getRoomCode());
     }
 
     private static class MaquinaTask extends Task<Object[]> {
         // A Task is a one-shot thing and its initial state should be immutable (or at least encapsulated from external modification).
         private final String groupCode;
-        private final String groupName;
+        private final String roomCode;
 
-        private MaquinaTask(String groupCode, String groupName) {
+        private MaquinaTask(String groupCode, String roomCode) {
             this.groupCode = groupCode;
-            this.groupName = groupName;
+            this.roomCode = roomCode;
         }
 
         @Override
         protected Object[] call() {
-            if (!groupCode.equals("SECTOR")) { //eficiencias por maquina del grupo
-                Object[] results = new Object[2];
-                Object[] eficienciasGrupo = MaquinaDAO.obtenerEficienciasPorGrupo(this.groupCode);
-                results[0] = eficienciasGrupo[0]; // maquinas
-                results[1] = eficienciasGrupo[1]; // eficiencia de grupo
-
-                return results;
+            if (!"SECTOR".equals(groupCode)) { // eficiencias por maquina y eficiencia total de grupo
+                return MaquinaDAO.obtenerEficienciasPorGrupo(this.groupCode);
             } else { // eficiencias por grupo del sector
                 Object[] results = new Object[2];
-                Object[] eficienciasSector = MaquinaDAO.obtenerEficienciasPorSector(this.groupName);
+                Object[] eficienciasSector = MaquinaDAO.obtenerEficienciasPorSector(this.roomCode);
 
                 final Map<String, Integer> eficienciasPorGrupo = new LinkedHashMap<>();
                 final Map<String, List<Maquina>> maquinasPorGrupo = ((List<Maquina>) eficienciasSector[0]).stream()
@@ -99,7 +93,6 @@ public class MaquinaService extends ScheduledService<Object[]> {
                         dividendo += maquina.getTimeOn() + maquina.getTimeOff();
                     }
                     Integer eficienciaGrupo = (int) Math.round((double) divisor / dividendo);
-//                    System.out.println(set.getKey() + " = " + set.getValue());
                     eficienciasPorGrupo.put(set.getKey().trim(), eficienciaGrupo);
                 }
 

@@ -37,16 +37,14 @@ public class MaquinaDAO {
                     maquina.setGroupCode(rs.getString("GroupCode"));
                     maquina.setTimeOn(rs.getInt("TimeOn"));
                     maquina.setTimeOff(rs.getInt("TimeOff"));
-                    maquina.setWorkEfficiency(rs.getInt("WorkEfficiency") > 100 ? 100 : rs.getInt("WorkEfficiency"));
+                    maquina.setWorkEfficiency(rs.getInt("WorkEfficiency") > 100 ? rs.getInt("TimeEfficiency") : rs.getInt("WorkEfficiency"));
                     maquina.setTimeEfficiency(rs.getInt("TimeEfficiency"));
                     maquina.setState(rs.getInt("State"));
                     maquina.setFunctionKey(rs.getInt("FunctionKey"));
 
-                    if (maquina.getTimeEfficiency() > 0) {
-                        maquinas.add(maquina);
-                        divisor += maquina.getWorkEfficiency() * (maquina.getTimeOn() + maquina.getTimeOff());
-                        dividendo += maquina.getTimeOn() + maquina.getTimeOff();
-                    }
+                    maquinas.add(maquina);
+                    divisor += maquina.getWorkEfficiency() * (maquina.getTimeOn() + maquina.getTimeOff());
+                    dividendo += maquina.getTimeOn() + maquina.getTimeOff();
                 }
                 if (dividendo > 0)
                     eficienciaGrupo = (int) (Math.round((double) divisor / dividendo));
@@ -83,14 +81,12 @@ public class MaquinaDAO {
                     maquina.setGroupCode(rs.getString("GroupCode"));
                     maquina.setTimeOn(rs.getInt("TimeOn"));
                     maquina.setTimeOff(rs.getInt("TimeOff"));
-                    maquina.setWorkEfficiency(rs.getInt("WorkEfficiency") > 100 ? 100 : rs.getInt("WorkEfficiency"));
+                    maquina.setWorkEfficiency(rs.getInt("WorkEfficiency") > 100 ? rs.getInt("TimeEfficiency") : rs.getInt("WorkEfficiency"));
                     maquina.setTimeEfficiency(rs.getInt("TimeEfficiency"));
 
-                    if (maquina.getTimeEfficiency() > 0) {
-                        maquinas.add(maquina);
-                        divisor += maquina.getWorkEfficiency() * (maquina.getTimeOn() + maquina.getTimeOff());
-                        dividendo += maquina.getTimeOn() + maquina.getTimeOff();
-                    }
+                    maquinas.add(maquina);
+                    divisor += maquina.getWorkEfficiency() * (maquina.getTimeOn() + maquina.getTimeOff());
+                    dividendo += maquina.getTimeOn() + maquina.getTimeOff();
                 }
                 if (dividendo > 0)
                     eficienciaTotal = (int) Math.round((double) divisor / dividendo);

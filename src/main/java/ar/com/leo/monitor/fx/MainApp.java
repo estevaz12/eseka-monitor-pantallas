@@ -24,14 +24,12 @@ public class MainApp extends Application {
         // set Stage boundaries to visible bounds of the main screen
         stage.setX(primaryScreenBounds.getMinX());
         stage.setY(primaryScreenBounds.getMinY());
-        stage.setWidth(primaryScreenBounds.getWidth());
-        stage.setHeight(primaryScreenBounds.getHeight());
-//        System.out.println("width: " + primaryScreenBounds.getWidth()); // 1536
-//        System.out.println("height: " + primaryScreenBounds.getHeight()); // 864
-//        stage.setFullScreen(true);
+        stage.setWidth(primaryScreenBounds.getWidth()); // 1536
+        stage.setHeight(primaryScreenBounds.getHeight()); // 864
         stage.setMaximized(true);
         stage.toFront();
         stage.setAlwaysOnTop(true);
+//        stage.setFullScreen(true);
 //        stage.setResizable(false);
         try {
             System.out.println("Parámetros: " + getParameters().getRaw());
@@ -59,5 +57,4 @@ public class MainApp extends Application {
         // start JavaFX
         launch(args);
     }
-
 }
