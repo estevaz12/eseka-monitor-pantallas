@@ -2,7 +2,7 @@ package ar.com.leo.monitor.fx;
 
 import java.io.IOException;
 
-import ar.com.leo.monitor.fx.controller.MonitorController;;
+import ar.com.leo.monitor.fx.controller.MonitorController;
 import javafx.application.Application;
 
 import javafx.fxml.FXMLLoader;
